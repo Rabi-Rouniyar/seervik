@@ -1,31 +1,51 @@
 %{
-#include<stdio.h>
-#include "Ass4c.tab.h"
+#include <stdio.h>
 int yylex(void);
 int yyerror(char *s);
+int valid = 0;  // Global flag to ensure single output
 %}
-%token BUILTIN UD WS ID OPEN_SQ CLOSE_SQ EQ NEW SC COMMA DIGIT 
-%%
-start :  varlist WS varlist  {printf(" NOT Valid Declaration \n");} 
-        |  varlist UD DIGIT  {printf("Valid Declaration \n");}
-        |  varlist  {printf("Valid Declaration \n");}
-        |  varlist UD varlist {printf("Valid Declaration \n");}
-        | varlist : varlist COMMA ID | ID;
-%%
 
-int yywrap()
-{ return 1;
-}
+%token NEW UD WS ID OPEN_SQ CLOSE_SQ EQ COMMA DIGIT INVALID EOL
+
+%%
+start : declaration EOL {
+            if (!valid) {
+                printf("Valid Declaration\n");
+                valid = 1;
+            }
+        }
+      | error EOL {
+            if (!valid) {
+                printf("Not Valid Declaration\n");
+                valid = 1;
+            }
+        }
+      ;
+
+declaration : varlist UD DIGIT         { valid = 0; }
+            | varlist                  { valid = 0; }
+            | varlist UD varlist       { valid = 0; }
+            | varlist WS varlist       { printf("Not Valid Declaration\n"); valid = 1; }
+            ;
+
+varlist : ID
+        | varlist COMMA ID
+        ;
+%%
 
 int main()
 {
-	printf("\nEnter variable declaration  :  ");
-	yyparse();
-	return 1;
+    printf("Enter variable declaration: ");
+    yyparse();
+    return 0;
+}
+
+int yywrap()
+{
+    return 1;
 }
 
 int yyerror(char *s)
 {
-	fprintf(stderr,"s\n",s);
-	return 1;
+    return 1;
 }
